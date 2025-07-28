@@ -1,0 +1,18 @@
+```json
+{
+  "name": "kenichi-xd",
+  "version": "1.0.0",
+  "description": "WhatsApp bot named KENICHI-XD",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "KENICHI-XD",
+  "license": "MIT",
+  "dependencies": {
+    "whatsapp-web.js": "^1.19.1",
+    "qrcode-terminal": "^0.12.0",
+    "puppeteer": "^19.0.0"
+  }
+}
+```

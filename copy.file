@@ -1,0 +1,156 @@
+const config = require('../config');
+const { cmd } = require('../command');
+
+// Newsletter database (in a real app, use a proper database)
+const newsletterSubscribers = new Set();
+
+cmd({
+  pattern: 'mee',
+  alias: ['hello'],
+  desc: 'Mention user and send voice note',
+  category: 'fun',
+  react: '🎙️'
+}, async (conn, m, { reply }) => {
+  const voiceClips = [
+    "https://cdn.ironman.my.id/i/7p5plg.mp4",
+    "https://cdn.ironman.my.id/i/rnptgd.mp4",
+    "https://cdn.ironman.my.id/i/smsl2s.mp4",
+    "https://cdn.ironman.my.id/i/vkvh1d.mp4",
+    "https://cdn.ironman.my.id/i/9xp5lb.mp4",
+    "https://cdn.ironman.my.id/i/jfr6cu.mp4",
+    "https://cdn.ironman.my.id/i/l4dyvg.mp4",
+    "https://cdn.ironman.my.id/i/4z93dg.mp4",
+    "https://cdn.ironman.my.id/i/m9gwk0.mp4",
+    "https://cdn.ironman.my.id/i/gr1jjc.mp4",
+    "https://cdn.ironman.my.id/i/lbr8of.mp4",
+    "https://cdn.ironman.my.id/i/0z95mz.mp4",
+    "https://cdn.ironman.my.id/i/rldpwy.mp4",
+    "https://cdn.ironman.my.id/i/lz2z87.mp4",
+    "https://cdn.ironman.my.id/i/gg5jct.mp4"
+  ];
+
+  const randomClip = voiceClips[Math.floor(Math.random() * voiceClips.length)];
+  const mentionedUser = m.sender;
+
+  // 🧷 Mention user with text first
+  await conn.sendMessage(m.chat, {
+    text: `@${mentionedUser.split('@')[0]}`,
+    mentions: [mentionedUser]
+  });
+
+  // 🎙️ Send Voice Note with Audio Type and Waveform + ExternalAdReply
+  await conn.sendMessage(m.chat, {
+    audio: { url: randomClip },
+    mimetype: 'audio/mp4',
+    ptt: true,
+    waveform: [99, 0, 99, 0, 99],
+    contextInfo: {
+      forwardingScore: 55555,
+      isForwarded: true,
+      externalAdReply: {
+        title: "𝐂𝐀𝐒𝐄𝐘𝐑𝐇𝐎𝐃𝐄𝐒 𝐓𝐄𝐂𝐇",
+        body: "𝐓𝝰̚𝐠͜͡𝗲 𝝪𝐨̚𝝻͜͡𝐫 𝐋𝝾̚𝝼͜͡𝗲 :🦚🍬⛱️🎗️💖",
+        mediaType: 4,
+        thumbnailUrl: "https://files.catbox.moe/ord5nm.jpg",
+        sourceUrl: "https://Wa.me/+254781496274",
+        showAdAttribution: true
+      }
+    },
+    mentions: [mentionedUser]
+  });
+});
+
+// Newsletter commands
+cmd({
+  pattern: 'subscribe',
+  alias: ['newsletter', 'joinnews'],
+  desc: 'Subscribe to newsletter updates',
+  category: 'utility',
+  react: '📩'
+}, async (conn, m) => {
+  const userId = m.sender;
+  if (newsletterSubscribers.has(userId)) {
+    return await conn.sendMessage(m.chat, { text: "You're already subscribed to our newsletter! ❤️" });
+  }
+  
+  newsletterSubscribers.add(userId);
+  await conn.sendMessage(m.chat, { 
+    text: "🎉 You've successfully subscribed to our newsletter!\n\nYou'll receive important updates from 𝐂𝐀𝐒𝐄𝐘𝐑𝐇𝐎𝐃𝐄𝐒 𝐓𝐄𝐂𝐇.",
+    contextInfo: {
+      externalAdReply: {
+        title: "𝐂𝐀𝐒𝐄𝐘𝐑𝐇𝐎𝐃𝐄𝐒 𝐓𝐄𝐂𝐇",
+        body: "Stay updated with our latest features!",
+        thumbnailUrl: "https://files.catbox.moe/ord5nm.jpg",
+        sourceUrl: "https://Wa.me/+254781496274"
+      }
+    }
+  });
+});
+
+cmd({
+  pattern: 'unsubscribe',
+  alias: ['leavenews'],
+  desc: 'Unsubscribe from newsletter updates',
+  category: 'utility',
+  react: '📤'
+}, async (conn, m) => {
+  const userId = m.sender;
+  if (!newsletterSubscribers.has(userId)) {
+    return await conn.sendMessage(m.chat, { text: "You're not currently subscribed to our newsletter." });
+  }
+  
+  newsletterSubscribers.delete(userId);
+  await conn.sendMessage(m.chat, { text: "You've been unsubscribed from our newsletter. 😢\n\nReply *subscribe* anytime to join again!" });
+});
+
+cmd({
+  pattern: 'broadcast',
+  alias: ['bc', 'newsletterbc'],
+  desc: 'Send newsletter to all subscribers (Admin only)',
+  category: 'utility',
+  react: '📢',
+  fromMe: true // Only bot owner can use this
+}, async (conn, m, { text }) => {
+  if (!text) return await conn.sendMessage(m.chat, { text: "Please provide a message to broadcast.\nExample: *broadcast Hello subscribers!*" });
+  
+  const totalSubscribers = newsletterSubscribers.size;
+  if (totalSubscribers === 0) {
+    return await conn.sendMessage(m.chat, { text: "No subscribers yet to broadcast to." });
+  }
+  
+  // Send to owner first
+  await conn.sendMessage(m.chat, { 
+    text: `📢 Starting broadcast to ${totalSubscribers} subscribers...\n\nMessage: ${text}` 
+  });
+  
+  // Broadcast to all subscribers
+  let successCount = 0;
+  let failCount = 0;
+  
+  for (const subscriber of newsletterSubscribers) {
+    try {
+      await conn.sendMessage(subscriber, { 
+        text: `📢 *Newsletter Update*\n\n${text}\n\n- 𝐂𝐀𝐒𝐄𝐘𝐑𝐇𝐎𝐃𝐄𝐒 𝐓𝐄𝐂𝐇 Team`,
+        contextInfo: {
+          externalAdReply: {
+            title: "𝐂𝐀𝐒𝐄𝐘𝐑𝐇𝐎𝐃𝐄𝐒 𝐓𝐄𝐂𝐇",
+            body: "Official Newsletter Update",
+            thumbnailUrl: "https://files.catbox.moe/ord5nm.jpg",
+            sourceUrl: "https://Wa.me/+254781496274"
+          }
+        }
+      });
+      successCount++;
+    } catch (error) {
+      console.error(`Failed to send to ${subscriber}:`, error);
+      failCount++;
+    }
+  }
+  
+  // Report back to owner
+  await conn.sendMessage(m.chat, { 
+    text: `✅ Broadcast completed!\n\n📊 Status:\n• Success: ${successCount}\n• Failed: ${failCount}\n• Total: ${totalSubscribers}` 
+  });
+});
+
+//CODES BY CASEYRHODES
